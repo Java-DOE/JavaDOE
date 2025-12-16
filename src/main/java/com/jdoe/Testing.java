@@ -8,10 +8,11 @@ import com.jdoe.algorithms.FactorialDOE;
  */
 public class Testing
 {
-    //! this main class is used for testing purposes only
+    //! for testing purposes only  does not require a main entry point
     public static void main( String[] args )
     {
         int[] arrayOfLevels = {2,3,6};
-        FactorialDOE.FullFactorial(arrayOfLevels);
+        FactorialDOE.fullFactorial(arrayOfLevels);
+        FactorialDOE.fullFactorial2Level( arrayOfLevels.length );
     }
 }
