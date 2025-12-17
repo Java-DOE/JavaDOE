@@ -1,9 +1,15 @@
 package com.jdoe.algorithms;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.jdoe.util.FactorialUtility;
 
 /*
  * Copyright (c) 2025 Noor Mustafa
@@ -141,19 +147,75 @@ public class FactorialDOE {
     }
 
     public static void fractionalFactorial( String generetor ) {
-        // validate generetor string
-        if ( !generetor.matches( "^[A-Za-z +\\-]+$" ) ) {
-            throw new IllegalArgumentException( "Generator string contains invalid characters. Allowed: letters, space, +, -" );
-        }
-        int factorCount = 0;
-        for ( int i = 0; i < generetor.length() - 1; i++ ) {
-            if ( generetor.contains( " " ) ) {
-                factorCount += 1;
+        Array2DRowRealMatrix matrixFactory = new Array2DRowRealMatrix();
+        // validation
+        FactorialUtility.validateGeneretor( generetor );
+        // parsing generetor
+        List< String > factorList = Arrays.asList( generetor.trim().toLowerCase().split( " " ) );
+        List< Integer > combinationDesignFactorsIndexList = new ArrayList<>();
+        List< Integer > mainDesignFactorIndexList = new ArrayList<>();
+        for ( String factor : factorList ) {
+            if ( factor.equalsIgnoreCase( " " ) ) {
+                factorList.remove( factor );
+            }
+            List< String > factorSubList = Arrays.asList( factor.split( "" ) );
+            if ( factorSubList.size() == 1 ) {
+                mainDesignFactorIndexList.add( factorList.indexOf( factor ) );
+            } else if ( factorSubList.size() > 1 ) {
+                combinationDesignFactorsIndexList.add( factorList.indexOf( factor ) );
             }
         }
-        if ( generetor.split( " " ).length != factorCount ) {
-            throw new IllegalArgumentException( "Generator does not match the number of factors" );
+        // main design factor 2 level full factorial matrix
+        int[] fullFactorialParam = new int[ mainDesignFactorIndexList.size() ];
+        List< RealMatrix > mainDesignFactor2LFFMatrixList = new ArrayList<>();
+        for ( int i = 0; mainDesignFactorIndexList.size() > i; i++ ) {
+            mainDesignFactor2LFFMatrixList.add( fullFactorial2Level( 1 ) );
+            fullFactorialParam[ i ] = 2; // fixed level size
         }
+        // creating the final result matrix
+        Integer rowNum = fullFactorial( fullFactorialParam ).getRowDimension();
+        Integer colNum = factorList.size();
+        RealMatrix finalDesignMatrix = matrixFactory.createMatrix( rowNum, colNum );
+
+        // computing and populating matrix for main design factor factorial first
+        for ( Integer mainDesignFactorIndexValue :mainDesignFactorIndexList) {
+            for ( int i = 0; mainDesignFactor2LFFMatrixList.size() > i; i++ ) {
+                RealMatrix currentMainDesignFactorMatrix = mainDesignFactor2LFFMatrixList.get( i );
+                for ( int j = 0; currentMainDesignFactorMatrix.getRowDimension() >= j; j++ ) {
+                    double currentMainDesignFactorMatrixValue = currentMainDesignFactorMatrix.getRow( j )[ 0 ];
+                    finalDesignMatrix.setEntry( j, mainDesignFactorIndexValue, currentMainDesignFactorMatrixValue );
+                }
+            }
+        }
+        // computing combination design factor and populate the final design matrix with it
+        //? worry about the "-" and "+" cases in the genereter later first populate with product
+        for ( Integer combinationDesignFactorIndexValue : combinationDesignFactorsIndexList ) {
+            String[] factorCombinationSplit = factorList.get( combinationDesignFactorIndexValue ).split( "" );
+            /////////////// matching mainDesingnFactor ///////////////////////////////
+            List< Integer > matchingMainFactorFinalMatrixIndexList = new ArrayList<>();
+            for ( int c = 0; factorCombinationSplit.length > c; c++ ) {
+                for ( int m = 0; mainDesignFactorIndexList.size() > m; m++ ) {
+                    String currDesignFactorName = factorList.get( m );
+                    if ( factorCombinationSplit[ c ].equalsIgnoreCase( currDesignFactorName ) ) {
+                        matchingMainFactorFinalMatrixIndexList.add( m );
+                    }
+                }
+            }
+            //////////////////////////////////////////////////////////////
+            double mainFactorsProductValue = 1.0;
+            for ( int c = 0; matchingMainFactorFinalMatrixIndexList.size() > c; c++ ) {
+                for ( int r = 0; finalDesignMatrix.getRowDimension() > r; r++ ) {
+                    double mainFactorValue = finalDesignMatrix.getEntry( r, c );
+                    mainFactorsProductValue *= mainFactorValue;
+                }
+                for ( int r = 0; finalDesignMatrix.getRowDimension() > r; r++ ) {
+                    // setting the combination factor value in the final matrix
+                    finalDesignMatrix.setEntry( r, combinationDesignFactorIndexValue, mainFactorsProductValue );
+                }
+            }
+        }
+
+        log.info( finalDesignMatrix );
     }
 
 }
