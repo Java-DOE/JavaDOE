@@ -146,7 +146,66 @@ public class FactorialDOE {
         return matrix;
     }
 
-    public static void fractionalFactorial( String generetor ) {
+    /**
+     * Generates a fractional factorial design matrix from a generator string.
+     *
+     * <p>
+     * This method creates a design matrix for a fractional factorial experiment based on a user-provided generator string.
+     * The generator string defines main factors and combination factors, optionally with a leading '+' or '-' sign for
+     * combination factors. Each main factor is treated as a 2-level factor (-1 and +1). Combination factors are computed
+     * as the row-wise product of the relevant main factor columns, with signs applied if specified.
+     * </p>
+     *
+     * <p>
+     * The resulting matrix includes:
+     * <ul>
+     *   <li>Main factor columns: each column corresponds to a main factor, populated using a 2-level full factorial design.</li>
+     *   <li>Combination factor columns: each column is calculated by multiplying the main factor columns involved in that combination, with an optional leading sign applied.</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * Example generator strings:
+     * <ul>
+     *   <li>"a b ab" – two main factors a, b, and one combination factor ab.</li>
+     *   <li>"a b -ab" – two main factors a, b, and one combination factor ab with a negative sign applied.</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * Steps performed by this method:
+     * <ol>
+     *   <li>Validate the generator string using {@link FactorialUtility#validateGeneretor(String)}.</li>
+     *   <li>Parse the generator into main factors and combination factors.</li>
+     *   <li>Generate a 2-level full factorial design for the main factors.</li>
+     *   <li>Populate the final design matrix with main factor values.</li>
+     *   <li>For each combination factor, compute the row-wise product of its associated main factor columns.</li>
+     *   <li>If a leading sign ('+' or '-') exists for a combination factor, apply it to the computed product.</li>
+     *   <li>Populate the final design matrix with the computed combination factor values.</li>
+     *   <li>Log the final matrix for inspection.</li>
+     * </ol>
+     * </p>
+     *
+     * <p>
+     * Notes:
+     * <ul>
+     *   <li>The number of rows in the final matrix is 2^k, where k is the number of main factors.</li>
+     *   <li>The number of columns equals the total number of factors in the generator string (main + combination).</li>
+     *   <li>Combination factors can involve multiple main factors.</li>
+     *   <li>Leading '+' signs are optional and do not modify the product; leading '-' signs negate the product.</li>
+     * </ul>
+     * </p>
+     *
+     * @param generetor
+     *        A generator string defining main factors and combination factors. Main factors are single letters,
+     *        combination factors are multiple letters possibly prefixed with '+' or '-' to indicate sign.
+     *
+     * @throws IllegalArgumentException
+     *         If the generator string is invalid according to {@link FactorialUtility#validateGeneretor(String)}.
+     *
+     * @see FactorialUtility#validateGeneretor(String)
+     */
+    public static RealMatrix fractionalFactorial( String generetor ) {
         Array2DRowRealMatrix matrixFactory = new Array2DRowRealMatrix();
         // validation
         FactorialUtility.validateGeneretor( generetor );
@@ -166,56 +225,55 @@ public class FactorialDOE {
             }
         }
         // main design factor 2 level full factorial matrix
-        int[] fullFactorialParam = new int[ mainDesignFactorIndexList.size() ];
-        List< RealMatrix > mainDesignFactor2LFFMatrixList = new ArrayList<>();
-        for ( int i = 0; mainDesignFactorIndexList.size() > i; i++ ) {
-            mainDesignFactor2LFFMatrixList.add( fullFactorial2Level( 1 ) );
-            fullFactorialParam[ i ] = 2; // fixed level size
-        }
+        RealMatrix mainDesignFactors2LFFMatrix = fullFactorial2Level( mainDesignFactorIndexList.size() );
         // creating the final result matrix
-        Integer rowNum = fullFactorial( fullFactorialParam ).getRowDimension();
+        Integer rowNum = fullFactorial2Level( mainDesignFactorIndexList.size() ).getRowDimension();
         Integer colNum = factorList.size();
         RealMatrix finalDesignMatrix = matrixFactory.createMatrix( rowNum, colNum );
 
         // computing and populating matrix for main design factor factorial first
-        for ( Integer mainDesignFactorIndexValue :mainDesignFactorIndexList) {
-            for ( int i = 0; mainDesignFactor2LFFMatrixList.size() > i; i++ ) {
-                RealMatrix currentMainDesignFactorMatrix = mainDesignFactor2LFFMatrixList.get( i );
-                for ( int j = 0; currentMainDesignFactorMatrix.getRowDimension() >= j; j++ ) {
-                    double currentMainDesignFactorMatrixValue = currentMainDesignFactorMatrix.getRow( j )[ 0 ];
-                    finalDesignMatrix.setEntry( j, mainDesignFactorIndexValue, currentMainDesignFactorMatrixValue );
-                }
+        for ( Integer mainDesignFactorIndexValue : mainDesignFactorIndexList ) {
+            for ( int j = 0; mainDesignFactors2LFFMatrix.getRowDimension() > j; j++ ) {
+                double currentMainDesignFactorMatrixValue = mainDesignFactors2LFFMatrix.getRow( j )[ mainDesignFactorIndexValue ];
+                finalDesignMatrix.setEntry( j, mainDesignFactorIndexValue, currentMainDesignFactorMatrixValue );
             }
         }
         // computing combination design factor and populate the final design matrix with it
-        //? worry about the "-" and "+" cases in the genereter later first populate with product
         for ( Integer combinationDesignFactorIndexValue : combinationDesignFactorsIndexList ) {
-            String[] factorCombinationSplit = factorList.get( combinationDesignFactorIndexValue ).split( "" );
-            /////////////// matching mainDesingnFactor ///////////////////////////////
+            String signOfCurrentCombinationDesignFactor = "";
+            List< String > factorCombinationSplit = Arrays.asList( factorList.get( combinationDesignFactorIndexValue ).split( "" ) );
+            if ( factorList.get( combinationDesignFactorIndexValue ).startsWith( "-" ) || factorList.get(
+                    combinationDesignFactorIndexValue ).startsWith( "+" ) ) {
+                signOfCurrentCombinationDesignFactor =  factorList.get( combinationDesignFactorIndexValue ).split( "" )[0];
+            }
             List< Integer > matchingMainFactorFinalMatrixIndexList = new ArrayList<>();
-            for ( int c = 0; factorCombinationSplit.length > c; c++ ) {
+            for ( int c = 0; factorCombinationSplit.size() > c; c++ ) {
                 for ( int m = 0; mainDesignFactorIndexList.size() > m; m++ ) {
                     String currDesignFactorName = factorList.get( m );
-                    if ( factorCombinationSplit[ c ].equalsIgnoreCase( currDesignFactorName ) ) {
+                    if ( factorCombinationSplit.get( c ).equalsIgnoreCase( currDesignFactorName ) ) {
                         matchingMainFactorFinalMatrixIndexList.add( m );
                     }
                 }
             }
-            //////////////////////////////////////////////////////////////
-            double mainFactorsProductValue = 1.0;
-            for ( int c = 0; matchingMainFactorFinalMatrixIndexList.size() > c; c++ ) {
-                for ( int r = 0; finalDesignMatrix.getRowDimension() > r; r++ ) {
+            for ( int r = 0; finalDesignMatrix.getRowDimension() > r; r++ ) {
+                double mainFactorsProductValue = 1.0;
+                for ( int c = 0; matchingMainFactorFinalMatrixIndexList.size() > c; c++ ) {
                     double mainFactorValue = finalDesignMatrix.getEntry( r, c );
                     mainFactorsProductValue *= mainFactorValue;
                 }
-                for ( int r = 0; finalDesignMatrix.getRowDimension() > r; r++ ) {
-                    // setting the combination factor value in the final matrix
-                    finalDesignMatrix.setEntry( r, combinationDesignFactorIndexValue, mainFactorsProductValue );
+                if ( !signOfCurrentCombinationDesignFactor.isBlank() ) { // condition to handle signs in combination design factors
+                    if ( signOfCurrentCombinationDesignFactor.equalsIgnoreCase( "-" ) ) {
+                        mainFactorsProductValue = -mainFactorsProductValue;
+                    }
                 }
+                // setting the combination factor value in the final matrix
+                finalDesignMatrix.setEntry( r, combinationDesignFactorIndexValue, mainFactorsProductValue );
             }
         }
 
-        log.info( finalDesignMatrix );
+        log.info("Fractional Factorial Result Matrix: " + finalDesignMatrix );
+
+        return finalDesignMatrix;
     }
 
 }

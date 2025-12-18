@@ -14,6 +14,7 @@ public class Testing
         int[] arrayOfLevels = {2,3,6};
 //        FactorialDOE.fullFactorial(arrayOfLevels);
 //        FactorialDOE.fullFactorial2Level( arrayOfLevels.length );
-        FactorialDOE.fractionalFactorial( "a b ab" );
+        FactorialDOE.fractionalFactorial( "a b -ab" );
+        FactorialDOE.fractionalFactorial( "a b +ab" );
     }
 }
