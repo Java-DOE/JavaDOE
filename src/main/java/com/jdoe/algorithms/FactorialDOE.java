@@ -3,6 +3,9 @@ package com.jdoe.algorithms;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -67,7 +70,7 @@ public class FactorialDOE {
      * @param designFactorLevelArray
      *         an array where each element specifies the number of levels for a design factor
      */
-    public static RealMatrix fullFactorial( int[] designFactorLevelArray ) {
+    public static RealMatrix fullFactorial( Integer[] designFactorLevelArray ) {
         // calculate matrix size by number of combinations
         int length = designFactorLevelArray.length;
         int combinationCount = 1;
@@ -150,10 +153,10 @@ public class FactorialDOE {
      * Generates a fractional factorial design matrix from a generator string.
      *
      * <p>
-     * This method creates a design matrix for a fractional factorial experiment based on a user-provided generator string.
-     * The generator string defines main factors and combination factors, optionally with a leading '+' or '-' sign for
-     * combination factors. Each main factor is treated as a 2-level factor (-1 and +1). Combination factors are computed
-     * as the row-wise product of the relevant main factor columns, with signs applied if specified.
+     * This method creates a design matrix for a fractional factorial experiment based on a user-provided generator string. The generator
+     * string defines main factors and combination factors, optionally with a leading '+' or '-' sign for combination factors. Each main
+     * factor is treated as a 2-level factor (-1 and +1). Combination factors are computed as the row-wise product of the relevant main
+     * factor columns, with signs applied if specified.
      * </p>
      *
      * <p>
@@ -197,12 +200,11 @@ public class FactorialDOE {
      * </p>
      *
      * @param generetor
-     *        A generator string defining main factors and combination factors. Main factors are single letters,
-     *        combination factors are multiple letters possibly prefixed with '+' or '-' to indicate sign.
+     *         A generator string defining main factors and combination factors. Main factors are single letters, combination factors are
+     *         multiple letters possibly prefixed with '+' or '-' to indicate sign.
      *
      * @throws IllegalArgumentException
      *         If the generator string is invalid according to {@link FactorialUtility#validateGeneretor(String)}.
-     *
      * @see FactorialUtility#validateGeneretor(String)
      */
     public static RealMatrix fractionalFactorial( String generetor ) {
@@ -244,7 +246,7 @@ public class FactorialDOE {
             List< String > factorCombinationSplit = Arrays.asList( factorList.get( combinationDesignFactorIndexValue ).split( "" ) );
             if ( factorList.get( combinationDesignFactorIndexValue ).startsWith( "-" ) || factorList.get(
                     combinationDesignFactorIndexValue ).startsWith( "+" ) ) {
-                signOfCurrentCombinationDesignFactor =  factorList.get( combinationDesignFactorIndexValue ).split( "" )[0];
+                signOfCurrentCombinationDesignFactor = factorList.get( combinationDesignFactorIndexValue ).split( "" )[ 0 ];
             }
             List< Integer > matchingMainFactorFinalMatrixIndexList = new ArrayList<>();
             for ( int c = 0; factorCombinationSplit.size() > c; c++ ) {
@@ -271,9 +273,199 @@ public class FactorialDOE {
             }
         }
 
-        log.info("Fractional Factorial Result Matrix: " + finalDesignMatrix );
+        log.info( "Fractional Factorial Result Matrix: " + finalDesignMatrix );
 
         return finalDesignMatrix;
+    }
+
+    // NOTE:
+    // Combinations factors = which factors/levels are tested together
+    // Resolution = how clearly we can separate their effects after testing
+    // This method will generete teh optimal generetors for you based on the resolution value provided
+    public static RealMatrix fractionalFactorialByResolution( int n, int res ) {
+    /*
+     STEPS:
+      determine minimum base factors from the total number of factors provided
+      determine total number combination factors using resolution -1
+      generete generator string to produce 2 level fractional factorial
+     */
+        // Validating resolution
+        if ( res < 3 || res > 5 ) {
+            throw new IllegalArgumentException( "resolution number should be in range of 3 to 5" );
+        }
+
+        // 1. Find minimum base factors needed
+        Integer minFac = null;
+
+        for (int k = res - 1; k < n; k++) {
+            if (nFacAtRes(k, res) >= n) {
+                minFac = k;
+                break;
+            }
+        }
+
+        if (minFac == null) {
+            throw new IllegalArgumentException("design not possible");
+        }
+
+        // 2. Check if we have enough letters (theoretical, but included for completeness)
+        if (minFac > 26) { // Only 26 letters in alphabet
+            throw new IllegalArgumentException("design requires too many base-factors.");
+        }
+
+        // 3. Get base factors as letters
+        List<String> factors = new ArrayList<>();
+        for (int i = 0; i < minFac; i++) {
+            factors.add(String.valueOf((char) ('a' + i)));
+        }
+
+        // 4. Generate combinations for extra factors
+        List<String> extraFactors = new ArrayList<>();
+        int needed = n - factors.size();
+
+        // Generate combinations from length (res-1) up to length of factors
+        for (int r = res - 1; r <= factors.size() && needed > 0; r++) {
+            // Generate all combinations of size r from factors
+            List<List<String>> combos = generateCombinations(factors, r);
+
+            for (List<String> combo : combos) {
+                if (needed <= 0) break;
+
+                // Join combination (e.g., ["a", "b"] -> "ab")
+                String comboStr = String.join("", combo);
+                extraFactors.add(comboStr);
+                needed--;
+            }
+        }
+
+        // 5. Combine all factors
+        List<String> allFactors = new ArrayList<>(factors);
+        allFactors.addAll(extraFactors);
+
+        // 6. Create generator string
+        String generator = String.join(" ", allFactors);
+        return fractionalFactorial( generator );
+
+    }
+    // Helper method to calculate number of factors at given resolution
+    private static int nFacAtRes(int k, int res) {
+        // This calculates total factors possible with k base factors at resolution res
+        // For k base factors, total possible factors = k + C(k, res-1) + C(k, res) + ...
+        int total = k; // Base factors
+
+        // Add combinations starting from length (res-1) up to k
+        for (int r = res - 1; r <= k; r++) {
+            total += combinations(k, r);
+        }
+
+        return total;
+    }
+
+    private static int combinations(int n, int k) {
+        if (k < 0 || k > n) return 0;
+        if (k == 0 || k == n) return 1;
+
+        int result = 1;
+        for (int i = 1; i <= k; i++) {
+            result = result * (n - k + i) / i;
+        }
+        return result;
+    }
+
+
+    // Helper to generate all combinations of size k from a list
+    private static List<List<String>> generateCombinations(List<String> items, int k) {
+        List<List<String>> result = new ArrayList<>();
+        if (k == 0) {
+            result.add(new ArrayList<>());
+            return result;
+        }
+        if (k > items.size()) {
+            return result;
+        }
+
+        // Using backtracking to generate combinations
+        generateCombinationsHelper(items, k, 0, new ArrayList<>(), result);
+        return result;
+    }
+
+    private static void generateCombinationsHelper(List<String> items, int k, int start,
+            List<String> current, List<List<String>> result) {
+        if (current.size() == k) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+
+        for (int i = start; i < items.size(); i++) {
+            current.add(items.get(i));
+            generateCombinationsHelper(items, k, i + 1, current, result);
+            current.remove(current.size() - 1);
+        }
+    }
+
+    // Alternative: Using Java Streams for a more functional approach (Java 8+)
+    public static String createGeneratorStream(int n, int res) {
+        // Find minimum base factors
+        int minFac = IntStream.range(res - 1, n)
+                .filter(k -> nFacAtRes(k, res) >= n)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("design not possible"));
+
+        if (minFac > 26) {
+            throw new IllegalArgumentException("design requires too many base-factors.");
+        }
+
+        // Get base factors
+        List<String> factors = IntStream.range(0, minFac)
+                .mapToObj(i -> String.valueOf((char) ('a' + i)))
+                .collect( Collectors.toList());
+
+        // Generate extra factors using streams
+        List<String> extraFactors = new ArrayList<>();
+        int needed = n - factors.size();
+
+        // Create stream of combination lengths
+        Stream<Integer> lengths = IntStream.range(res - 1, factors.size() + 1)
+                .boxed();
+
+        // Flat map to get all combinations
+        List<String> allCombinations = lengths
+                .flatMap(r -> generateCombinationsStream(factors, r).stream())
+                .collect(Collectors.toList());
+
+        // Take only as many as needed
+        extraFactors = allCombinations.stream()
+                .limit(needed)
+                .collect(Collectors.toList());
+
+        // Combine all factors
+        List<String> allFactors = new ArrayList<>(factors);
+        allFactors.addAll(extraFactors);
+
+        return String.join(" ", allFactors);
+    }
+
+    // Generate combinations using streams
+    private static List<String> generateCombinationsStream(List<String> items, int r) {
+        if (r == 0) {
+            return List.of("");
+        }
+        if (r == 1) {
+            return new ArrayList<>(items);
+        }
+
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i <= items.size() - r; i++) {
+            String first = items.get(i);
+            List<String> remaining = items.subList(i + 1, items.size());
+            List<String> smallerCombos = generateCombinationsStream(remaining, r - 1);
+
+            for (String combo : smallerCombos) {
+                result.add(first + combo);
+            }
+        }
+
+        return result;
     }
 
 }
