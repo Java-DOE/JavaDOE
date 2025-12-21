@@ -1,5 +1,8 @@
 package com.jdoe.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FactorialUtility {
 
     /**
@@ -15,5 +18,62 @@ public class FactorialUtility {
             throw new IllegalArgumentException( "Generator does not match the number of factors" );
         }
     }
+
+    // Helper method to calculate number of factors at given resolution
+    public static int nFacAtRes(int k, int res) {
+        // This calculates total factors possible with k base factors at resolution res
+        // For k base factors, total possible factors = k + C(k, res-1) + C(k, res) + ...
+        int total = k; // Base factors
+
+        // Add combinations starting from length (res-1) up to k
+        for (int r = res - 1; r <= k; r++) {
+            total += combinations(k, r);
+        }
+
+        return total;
+    }
+
+    private static int combinations(int n, int k) {
+        if (k < 0 || k > n) return 0;
+        if (k == 0 || k == n) return 1;
+
+        int result = 1;
+        for (int i = 1; i <= k; i++) {
+            result = result * (n - k + i) / i;
+        }
+        return result;
+    }
+
+
+    // Helper to generate all combinations of size k from a list
+    public static List<List<String>> generateCombinations(List<String> items, int k) {
+        List<List<String>> result = new ArrayList<>();
+        if (k == 0) {
+            result.add(new ArrayList<>());
+            return result;
+        }
+        if (k > items.size()) {
+            return result;
+        }
+
+        // Using backtracking to generate combinations
+        generateCombinationsHelper(items, k, 0, new ArrayList<>(), result);
+        return result;
+    }
+
+    private static void generateCombinationsHelper(List<String> items, int k, int start,
+                                                   List<String> current, List<List<String>> result) {
+        if (current.size() == k) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+
+        for (int i = start; i < items.size(); i++) {
+            current.add(items.get(i));
+            generateCombinationsHelper(items, k, i + 1, current, result);
+            current.remove(current.size() - 1);
+        }
+    }
+
 
 }
