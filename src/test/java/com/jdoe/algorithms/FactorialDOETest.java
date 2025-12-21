@@ -4,18 +4,15 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.MockedStatic;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.List;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
-import com.jdoe.util.FactorialUtility;
 
 /**
- * Unit tests for {@link FactorialDOE#fractionalFactorialByResolution(int, int)}.
+ * Unit tests for all methods in {@link FactorialDOE}.
  */
 public class FactorialDOETest {
 
@@ -31,7 +28,9 @@ public class FactorialDOETest {
     public void restoreStreams() {
         System.setOut(originalOut);
     }
-    /********************************* FULL FACTORIAL *******************************/
+
+    /********************************* FULL FACTORIAL TESTS *******************************/
+
     @Test
     public void testFullFactorial_ValidInput_ReturnsCorrectMatrix() {
         // Arrange
@@ -84,7 +83,8 @@ public class FactorialDOETest {
         assertEquals(0, result.getColumnDimension());
     }
 
-    /********************************* FULL FACTORIAL 2 LEVEL *******************************/
+    /********************************* FULL FACTORIAL 2 LEVEL TESTS *******************************/
+
     @Test
     public void testFullFactorial2Level_ValidInput_ReturnsCorrectMatrix() {
         // Arrange
@@ -96,7 +96,7 @@ public class FactorialDOETest {
         // Assert
         assertNotNull(result);
         assertEquals(4, result.getRowDimension()); // 2^2 = 4 combinations
-        assertEquals(2, result.getColumnDimension());
+        assertEquals(2, result.getColumnDimension()); // 2 factors
 
         // Check values follow the expected pattern
         assertEquals(-1.0, result.getEntry(0, 0), 0.0);
@@ -134,23 +134,28 @@ public class FactorialDOETest {
         // Assert: Exception expected
     }
 
-    /********************************* FRACTIONAL FACTORIAL *******************************/
+    /********************************* FRACTIONAL FACTORIAL TESTS *******************************/
+
     @Test
     public void testFractionalFactorial_ValidGeneratorString_ReturnsMatrix() {
         // Arrange
         String generator = "a b ab";
 
-        try (MockedStatic<FactorialUtility> mockedUtility = mockStatic(FactorialUtility.class)) {
-            // Make validation pass silently
-            mockedUtility.when(() -> FactorialUtility.validateGeneretor(anyString())).then(invocation -> null);
+        // Act
+        RealMatrix result = FactorialDOE.fractionalFactorial(generator);
 
-            // Act
-            RealMatrix result = FactorialDOE.fractionalFactorial(generator);
+        // Assert
+        assertNotNull(result);
+        assertEquals(4, result.getRowDimension()); // 2^2 main factors
+        assertEquals(3, result.getColumnDimension()); // 3 total factors
 
-            // Assert
-            assertNotNull(result);
-            assertEquals(4, result.getRowDimension()); // 2^2 main factors
-            assertEquals(3, result.getColumnDimension()); // 3 total factors
+        // Verify basic properties of a 2-level design
+        for (int i = 0; i < result.getRowDimension(); i++) {
+            for (int j = 0; j < result.getColumnDimension(); j++) {
+                double value = result.getEntry(i, j);
+                assertTrue("Value should be either -1.0 or 1.0",
+                        Math.abs(value - 1.0) < 0.001 || Math.abs(value + 1.0) < 0.001);
+            }
         }
     }
 
@@ -159,37 +164,28 @@ public class FactorialDOETest {
         // Arrange
         String generator = "a b -ab";
 
-        try (MockedStatic<FactorialUtility> mockedUtility = mockStatic(FactorialUtility.class)) {
-            mockedUtility.when(() -> FactorialUtility.validateGeneretor(anyString())).then(invocation -> null);
+        // Act
+        RealMatrix result = FactorialDOE.fractionalFactorial(generator);
 
-            // Act
-            RealMatrix result = FactorialDOE.fractionalFactorial(generator);
-
-            // Assert
-            assertNotNull(result);
-            assertEquals(4, result.getRowDimension());
-            assertEquals(3, result.getColumnDimension());
-        }
+        // Assert
+        assertNotNull(result);
+        assertEquals(4, result.getRowDimension());
+        assertEquals(3, result.getColumnDimension());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testFractionalFactorial_InvalidGenerator_ThrowsException() {
         // Arrange
-        String invalidGenerator = "invalid generator";
+        String invalidGenerator = "1 2 3"; // Invalid characters
 
-        try (MockedStatic<FactorialUtility> mockedUtility = mockStatic( FactorialUtility.class)) {
-            mockedUtility.when(() -> FactorialUtility.validateGeneretor(anyString()))
-                    .thenThrow(new IllegalArgumentException("Invalid generator"));
+        // Act
+        FactorialDOE.fractionalFactorial(invalidGenerator);
 
-            // Act
-            FactorialDOE.fractionalFactorial(invalidGenerator);
-
-            // Assert: Exception expected
-        }
+        // Assert: Exception expected
     }
 
+    /********************************* FRACTIONAL FACTORIAL BY RESOLUTION TESTS *******************************/
 
-    /********************************* FRACTIONAL FACTORIAL BY RESOULTION *******************************/
     @Test(expected = IllegalArgumentException.class)
     public void testFractionalFactorialByResolution_InvalidResolution_LessThanThree() {
         // Arrange
@@ -215,17 +211,111 @@ public class FactorialDOETest {
     }
 
     @Test
-    public void testFractionalFactorialByResolution_ValidInput_ResThree_PrintsMatrix() {
+    public void testFractionalFactorialByResolution_ValidInput_ResThree_ReturnsMatrix() {
         // Arrange
-        int totalFactorsCount = 6;
+        int totalFactorsCount = 4;
         int resolution = 3;
 
-        // Act & Assert - Just invoke the method to ensure it doesn't throw exceptions
-        // Since it prints to System.out, we can capture that
+        // Act
         RealMatrix result = FactorialDOE.fractionalFactorialByResolution(totalFactorsCount, resolution);
-        System.out.println(result);
-        // Verify something was printed (basic verification)
-        assertFalse(outContent.toString().isEmpty());
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.getRowDimension() > 0);
+        assertEquals(totalFactorsCount, result.getColumnDimension());
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testFractionalFactorialByResolution_DesignNotPossible_ThrowsException() {
+        // Arrange
+        int totalFactorsCount = 100; // Too many factors
+        int resolution = 3;
+
+        // Act
+        FactorialDOE.fractionalFactorialByResolution(totalFactorsCount, resolution);
+
+        // Assert: Exception expected
+    }
+
+    /********************************* FRACFACT OPT TESTS *******************************/
+
+    @Test
+    public void testFracFactOpt_ValidParameters_ReturnsResults() {
+        // Arrange
+        int nFactors = 4;
+        int nErased = 1;
+        int maxAttempts = 0; // Try all combinations
+
+        // Act
+        Object[] result = FactorialDOE.fracFactOpt(nFactors, nErased, maxAttempts);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(3, result.length);
+        assertNotNull(result[0]); // Generator string
+        assertNotNull(result[1]); // Alias map
+        assertNotNull(result[2]); // Alias vector
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFracFactOpt_TooManyFactors_ThrowsException() {
+        // Arrange
+        int nFactors = 25; // Exceeds limit of 20
+        int nErased = 1;
+        int maxAttempts = 0;
+
+        // Act
+        FactorialDOE.fracFactOpt(nFactors, nErased, maxAttempts);
+
+        // Assert: Exception expected
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFracFactOpt_NegativeErased_ThrowsException() {
+        // Arrange
+        int nFactors = 4;
+        int nErased = -1; // Invalid negative value
+        int maxAttempts = 0;
+
+        // Act
+        FactorialDOE.fracFactOpt(nFactors, nErased, maxAttempts);
+
+        // Assert: Exception expected
+    }
+
+    /********************************* FRACFACT ALIASING TESTS *******************************/
+
+    @Test
+    public void testFracFactAliasing_ValidDesign_ReturnsAliasInfo() {
+        // Arrange
+        RealMatrix design = FactorialDOE.fractionalFactorial("a b ab");
+
+        // Act
+        Object[] result = FactorialDOE.fracFactAliasing(design);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.length);
+        assertTrue(result[0] instanceof List); // Alias map
+        assertTrue(result[1] instanceof double[]); // Alias vector
+
+        @SuppressWarnings("unchecked")
+        List<String> aliasMap = (List<String>) result[0];
+        double[] aliasVector = (double[]) result[1];
+
+        assertNotNull(aliasMap);
+        assertNotNull(aliasVector);
+        assertTrue(aliasVector.length > 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFracFactAliasing_TooManyFactors_ThrowsException() {
+        // Create a mock matrix with too many factors
+        RealMatrix tooLargeMatrix = new org.apache.commons.math3.linear.Array2DRowRealMatrix(4, 25);
+
+        // Act
+        FactorialDOE.fracFactAliasing(tooLargeMatrix);
+
+        // Assert: Exception expected
+    }
 }

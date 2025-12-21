@@ -33,7 +33,7 @@ public class FactorialUtility {
         return total;
     }
 
-    private static int combinations(int n, int k) {
+    public static int combinations(int n, int k) {
         if (k < 0 || k > n) return 0;
         if (k == 0 || k == n) return 1;
 
@@ -73,6 +73,73 @@ public class FactorialUtility {
             generateCombinationsHelper(items, k, i + 1, current, result);
             current.remove(current.size() - 1);
         }
+    }
+
+
+    public static List<List<Integer>> generateCombinationsIndices(int n, int k) {
+        List<List<Integer>> result = new ArrayList<>();
+        if (k == 0) {
+            result.add(new ArrayList<>());
+            return result;
+        }
+        if (k > n) {
+            return result;
+        }
+
+        generateCombinationsIndicesHelper(n, k, 0, new ArrayList<>(), result);
+        return result;
+    }
+
+    public static void generateCombinationsIndicesHelper(int n, int k, int start,
+                                                          List<Integer> current,
+                                                          List<List<Integer>> result) {
+        if (current.size() == k) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+
+        for (int i = start; i < n; i++) {
+            current.add(i);
+            generateCombinationsIndicesHelper(n, k, i + 1, current, result);
+            current.remove(current.size() - 1);
+        }
+    }
+
+    public static List<List<List<Integer>>> generateCombinationsFromList(List<List<Integer>> items, int k) {
+        List<List<List<Integer>>> result = new ArrayList<>();
+        if (k == 0) {
+            result.add(new ArrayList<>());
+            return result;
+        }
+        if (k > items.size()) {
+            return result;
+        }
+
+        generateCombinationsFromListHelper(items, k, 0, new ArrayList<>(), result);
+        return result;
+    }
+
+    public static void generateCombinationsFromListHelper(List<List<Integer>> items, int k, int start,
+                                                           List<List<Integer>> current,
+                                                           List<List<List<Integer>>> result) {
+        if (current.size() == k) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+
+        for (int i = start; i < items.size(); i++) {
+            current.add(items.get(i));
+            generateCombinationsFromListHelper(items, k, i + 1, current, result);
+            current.remove(current.size() - 1);
+        }
+    }
+
+    public static int compareVectors(double[] a, double[] b) {
+        for (int i = 0; i < Math.min(a.length, b.length); i++) {
+            int cmp = Double.compare(a[i], b[i]);
+            if (cmp != 0) return cmp;
+        }
+        return Integer.compare(a.length, b.length);
     }
 
 

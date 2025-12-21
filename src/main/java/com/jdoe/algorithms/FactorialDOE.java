@@ -1,8 +1,6 @@
 package com.jdoe.algorithms;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -76,7 +74,6 @@ public class FactorialDOE {
         for (int i = 0; i < length; i++) {
             combinationCount *= designFactorLevelArray[i];
         }
-        log.debug("Total Combinations: " + combinationCount);
         // create matrix for storing combinations
         Array2DRowRealMatrix matrixFactory = new Array2DRowRealMatrix();
         RealMatrix matrix = matrixFactory.createMatrix(combinationCount, length);
@@ -89,7 +86,6 @@ public class FactorialDOE {
                 temp /= designFactorLevelArray[colNum];
             }
         }
-        log.debug(matrix.toString());
         return matrix;
     }
 
@@ -127,7 +123,6 @@ public class FactorialDOE {
         Integer combinationCount = (int) Math.pow(2, designFactorCount);
         Array2DRowRealMatrix matrixFactory = new Array2DRowRealMatrix();
         RealMatrix matrix = matrixFactory.createMatrix(combinationCount, designFactorCount);
-        log.debug("Total Combinations: " + combinationCount);
         // populate matrix
         // Generate all binary numbers from 0 to (2^k - 1)
         for (int i = 0; i < combinationCount; i++) {
@@ -140,7 +135,6 @@ public class FactorialDOE {
                 matrix.setEntry(i, j, bitValue == 0 ? -1 : 1);
             }
         }
-        log.debug(matrix.toString());
         return matrix;
     }
 
@@ -264,7 +258,6 @@ public class FactorialDOE {
             }
         }
 
-        log.info("Fractional Factorial Result Matrix: " + finalDesignMatrix);
 
         return finalDesignMatrix;
     }
@@ -374,5 +367,283 @@ public class FactorialDOE {
         return fractionalFactorial(generator);
 
     }
+
+    /**
+     * Finds the optimal generator string for a 2-level fractional-factorial design
+     * with the specified number of factors and erased factors.
+     *
+     * <p>
+     * This method performs an exhaustive search (with optional limit) to find the
+     * generator string that minimizes aliasing between low-order interactions.
+     * </p>
+     *
+     * @param nFactors    The number of factors in the full factorial design
+     * @param nErased     The number of factors to "remove" to create the fractional design
+     * @param maxAttempts The maximum number of models to attempt. Positive values limit attempts,
+     *                    zero or negative values indicate all combinations should be attempted.
+     * @return An array containing: [0] generator string, [1] alias map, [2] alias vector
+     * @throws IllegalArgumentException if parameters are invalid or design is too complex
+     * @see #fracFactAliasing(RealMatrix)
+     */
+    public static Object[] fracFactOpt(int nFactors, int nErased, int maxAttempts) {
+        if (nFactors > 20) {
+            throw new IllegalArgumentException("Design too big, use 20 factors or less");
+        }
+
+        if (nFactors < 2) {
+            throw new IllegalArgumentException("Design too small");
+        }
+
+        if (nErased < 0) {
+            throw new IllegalArgumentException("Number of erased factors must be non-negative");
+        }
+
+        int nMainFactors = nFactors - nErased;
+
+        // Calculate number of possible aliases
+        int nAliases = 0;
+        for (int i = 2; i <= nMainFactors; i++) {
+            nAliases += FactorialUtility.combinations(nMainFactors, i);
+        }
+
+        if (nErased > FactorialUtility.combinations(nAliases, nErased)) {
+            throw new IllegalArgumentException("Too many erased factors to create aliasing");
+        }
+
+        // Generate main factor names (a, b, c, ...)
+        List<String> mainFactorNames = new ArrayList<>();
+        for (int i = 0; i < nMainFactors; i++) {
+            mainFactorNames.add(String.valueOf((char) ('a' + i)));
+        }
+
+        String mainDesign = String.join(" ", mainFactorNames);
+
+        // Generate all possible aliases
+        List<List<Integer>> aliases = new ArrayList<>();
+        for (int r = 2; r <= nMainFactors; r++) {
+            aliases.addAll(FactorialUtility.generateCombinationsIndices(nMainFactors, r));
+        }
+
+        // Sort by combination length and then lexicographically
+        aliases.sort((a, b) -> {
+            if (a.size() != b.size()) {
+                return Integer.compare(b.size(), a.size()); // Reverse order
+            }
+            for (int i = 0; i < a.size(); i++) {
+                int cmp = Integer.compare(a.get(i), b.get(i));
+                if (cmp != 0) return cmp;
+            }
+            return 0;
+        });
+
+        String bestDesign = null;
+        List<String> bestMap = new ArrayList<>();
+        double[] bestVector = new double[nFactors];
+        Arrays.fill(bestVector, nFactors);
+
+        int designRows = (int) Math.pow(2, nMainFactors);
+
+        // Try combinations of aliases
+        List<List<List<Integer>>> allCombinations = FactorialUtility.generateCombinationsFromList(aliases, nErased);
+
+        // Limit attempts if needed
+        if (maxAttempts > 0 && allCombinations.size() > maxAttempts) {
+            allCombinations = allCombinations.subList(0, maxAttempts);
+        }
+
+        for (List<List<Integer>> aliasing : allCombinations) {
+            List<String> aliasingNames = new ArrayList<>();
+            for (List<Integer> alias : aliasing) {
+                StringBuilder sb = new StringBuilder();
+                for (Integer idx : alias) {
+                    sb.append(mainFactorNames.get(idx));
+                }
+                aliasingNames.add(sb.toString());
+            }
+
+            String aliasingDesign = String.join(" ", aliasingNames);
+            String completeDesign = mainDesign + " " + aliasingDesign;
+
+            RealMatrix design = fractionalFactorial(completeDesign);
+
+            if (design.getRowDimension() == designRows && design.getColumnDimension() == nFactors) {
+                Object[] aliasResult = fracFactAliasing(design);
+                @SuppressWarnings("unchecked")
+                List<String> aliasMap = (List<String>) aliasResult[0];
+                double[] aliasVector = (double[]) aliasResult[1];
+
+                if (FactorialUtility.compareVectors(aliasVector, bestVector) < 0) {
+                    bestDesign = completeDesign;
+                    bestMap = new ArrayList<>(aliasMap);
+                    bestVector = Arrays.copyOf(aliasVector, aliasVector.length);
+                }
+            }
+        }
+
+        return new Object[]{bestDesign, bestMap, bestVector};
+    }
+
+    /**
+     * Finds the aliasings in a design, given the contrasts.
+     *
+     * <p>
+     * This method analyzes a fractional factorial design matrix to identify which factors and
+     * interactions are aliased with each other. In fractional factorial designs, some effects
+     * are confounded (aliased) with others due to the reduced number of experimental runs.
+     * </p>
+     *
+     * <p>
+     * The method works by:
+     * <ol>
+     *   <li>Computing the contrast matrix for all possible factor combinations</li>
+     *   <li>Grouping factor combinations that have identical contrasts (these are aliased)</li>
+     *   <li>Generating a human-readable alias map showing which factors/interactions are aliased</li>
+     *   <li>Creating an alias vector that quantifies the degree of aliasing between different order interactions</li>
+     * </ol>
+     * </p>
+     *
+     * <p>
+     * Example output for a 2^3-1 design with generator "a b -ab":
+     * <pre>
+     * Alias map: ["a = bc", "b = ac", "c = ab", "abc = 1"]
+     * </pre>
+     * This shows that factor 'a' is aliased with the bc interaction, and so on.
+     * </p>
+     *
+     * <p>
+     * The alias vector provides quantitative information about the aliasing structure.
+     * It can be converted to a matrix using utility methods to analyze how many aliasings
+     * exist between i-th and j-th order interactions.
+     * </p>
+     *
+     * @param design A design matrix like those returned by {@link #fractionalFactorial(String)}
+     *               or {@link #fractionalFactorialByResolution(int, int)}. The matrix should contain
+     *               factor levels coded as -1 and +1.
+     * @return An array containing:
+     * <ul>
+     *   <li>[0] - A List<String> representing the alias map. Each string shows a group of
+     *             aliased factors/interactions in the format "a = bc = def"</li>
+     *   <li>[1] - A double[] representing the alias vector, which quantifies the aliasing
+     *             between different order interactions</li>
+     * </ul>
+     * @throws IllegalArgumentException if the number of factors exceeds 20 (to prevent excessive computation)
+     * @see #fracFactOpt(int, int, int)
+     * @see #fractionalFactorial(String)
+     * @see #fractionalFactorialByResolution(int, int)
+     */
+    public static Object[] fracFactAliasing(RealMatrix design) {
+        int nRounds = design.getRowDimension();
+        int nFactors = design.getColumnDimension();
+
+        if (nFactors > 20) {
+            throw new IllegalArgumentException("Design too big, use 20 factors or less");
+        }
+
+        // Generate factor names (a, b, c, ...)
+        char[] factorNames = new char[nFactors];
+        for (int i = 0; i < nFactors; i++) {
+            factorNames[i] = (char) ('a' + i);
+        }
+
+        // Generate all combinations of factors
+        List<List<Integer>> allCombinations = new ArrayList<>();
+        for (int r = 1; r <= nFactors; r++) {
+            allCombinations.addAll(FactorialUtility.generateCombinationsIndices(nFactors, r));
+        }
+
+        // Group combinations by their contrast values
+        Map<String, List<List<Integer>>> aliases = new HashMap<>();
+
+        for (List<Integer> combination : allCombinations) {
+            // Calculate contrast for this combination
+            double[] contrast = new double[nRounds];
+            for (int i = 0; i < nRounds; i++) {
+                contrast[i] = 1.0;
+                for (Integer factorIdx : combination) {
+                    contrast[i] *= design.getEntry(i, factorIdx);
+                }
+            }
+
+            // Create a key from the contrast array
+            String key = Arrays.toString(contrast);
+
+            if (!aliases.containsKey(key)) {
+                aliases.put(key, new ArrayList<>());
+            }
+            aliases.get(key).add(combination);
+        }
+
+        // Process aliases into readable format
+        List<List<List<Integer>>> aliasesList = new ArrayList<>(aliases.values());
+
+        // Sort the aliases list
+        aliasesList.sort((list1, list2) -> {
+            // Compare by sizes of combinations
+            List<Integer> sizes1 = new ArrayList<>();
+            List<Integer> sizes2 = new ArrayList<>();
+
+            for (List<Integer> l : list1) sizes1.add(l.size());
+            for (List<Integer> l : list2) sizes2.add(l.size());
+
+            Collections.sort(sizes1);
+            Collections.sort(sizes2);
+
+            for (int i = 0; i < Math.min(sizes1.size(), sizes2.size()); i++) {
+                int cmp = Integer.compare(sizes1.get(i), sizes2.get(i));
+                if (cmp != 0) return cmp;
+            }
+
+            return Integer.compare(sizes1.size(), sizes2.size());
+        });
+
+        List<String> aliasesReadable = new ArrayList<>();
+        double[][] aliasMatrix = new double[nFactors][nFactors];
+
+        for (List<List<Integer>> aliasGroup : aliasesList) {
+            List<String> groupNames = new ArrayList<>();
+            for (List<Integer> combination : aliasGroup) {
+                StringBuilder sb = new StringBuilder();
+                for (Integer idx : combination) {
+                    sb.append(factorNames[idx]);
+                }
+                groupNames.add(sb.toString());
+            }
+
+            String aliasReadable = String.join(" = ", groupNames);
+            aliasesReadable.add(aliasReadable);
+
+            // Update alias matrix
+            List<Integer> sizes = new ArrayList<>();
+            for (List<Integer> combination : aliasGroup) {
+                sizes.add(combination.size());
+            }
+
+            for (int i = 0; i < sizes.size(); i++) {
+                for (int j = i + 1; j < sizes.size(); j++) {
+                    int size1 = sizes.get(i);
+                    int size2 = sizes.get(j);
+                    if (size1 <= size2) {
+                        aliasMatrix[size1 - 1][size2 - 1] += 1;
+                    } else {
+                        aliasMatrix[size2 - 1][size1 - 1] += 1;
+                    }
+                }
+            }
+        }
+
+        // Convert matrix to vector using aliasVectorIndices logic
+        int vectorSize = nFactors * (nFactors + 1) / 2;
+        double[] aliasVector = new double[vectorSize];
+        int idx = 0;
+
+        for (int i = 0; i < nFactors; i++) {
+            for (int j = i; j < nFactors; j++) {
+                aliasVector[idx++] = aliasMatrix[i][j];
+            }
+        }
+
+        return new Object[]{aliasesReadable, aliasVector};
+    }
+
 
 }
