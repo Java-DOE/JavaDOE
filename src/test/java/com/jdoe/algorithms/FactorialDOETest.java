@@ -1,6 +1,8 @@
 package com.jdoe.algorithms;
 
+import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.logging.log4j.core.tools.picocli.CommandLine;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,8 +71,8 @@ public class FactorialDOETest {
         }
     }
 
-    @Test
-    public void testFullFactorial_EmptyArray_ReturnsEmptyMatrix() {
+    @Test( expected = IllegalArgumentException.class)
+    public void testFullFactorial_EmptyArray_IllegalArgumentException() {
         // Arrange
         Integer[] factorLevels = {};
 
@@ -78,9 +80,6 @@ public class FactorialDOETest {
         RealMatrix result = FactorialDOE.fullFactorial(factorLevels);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getRowDimension()); // One combination of zero factors
-        assertEquals(0, result.getColumnDimension());
     }
 
     /********************************* FULL FACTORIAL 2 LEVEL TESTS *******************************/
@@ -98,18 +97,18 @@ public class FactorialDOETest {
         assertEquals(4, result.getRowDimension()); // 2^2 = 4 combinations
         assertEquals(2, result.getColumnDimension()); // 2 factors
 
-        // Check values follow the expected pattern
+        // Check values follow the expected pattern based on bit manipulation
         assertEquals(-1.0, result.getEntry(0, 0), 0.0);
         assertEquals(-1.0, result.getEntry(0, 1), 0.0);
-        assertEquals(1.0, result.getEntry(1, 0), 0.0);
-        assertEquals(-1.0, result.getEntry(1, 1), 0.0);
-        assertEquals(-1.0, result.getEntry(2, 0), 0.0);
-        assertEquals(1.0, result.getEntry(2, 1), 0.0);
+        assertEquals(-1.0, result.getEntry(1, 0), 0.0);
+        assertEquals(1.0, result.getEntry(1, 1), 0.0);
+        assertEquals(1.0, result.getEntry(2, 0), 0.0);
+        assertEquals(-1.0, result.getEntry(2, 1), 0.0);
         assertEquals(1.0, result.getEntry(3, 0), 0.0);
         assertEquals(1.0, result.getEntry(3, 1), 0.0);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testFullFactorial2Level_ZeroFactors_ReturnsIdentityMatrix() {
         // Arrange
         int factorCount = 0;
@@ -118,12 +117,9 @@ public class FactorialDOETest {
         RealMatrix result = FactorialDOE.fullFactorial2Level(factorCount);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getRowDimension()); // 2^0 = 1
-        assertEquals(0, result.getColumnDimension());
     }
 
-    @Test(expected = NegativeArraySizeException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testFullFactorial2Level_NegativeFactors_ThrowsException() {
         // Arrange
         int factorCount = -1;
