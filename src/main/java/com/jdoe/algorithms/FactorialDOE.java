@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.apache.commons.math3.analysis.function.Constant;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.logging.log4j.LogManager;
@@ -68,6 +69,11 @@ public class FactorialDOE {
      * @param designFactorLevelArray an array where each element specifies the number of levels for a design factor
      */
     public static RealMatrix fullFactorial(Integer[] designFactorLevelArray) {
+        // parse designFactorCount
+        if(designFactorLevelArray.length == 0){
+            throw new IllegalArgumentException("designFactorLevelArray cannot be negative");
+        }
+
         // calculate matrix size by number of combinations
         int length = designFactorLevelArray.length;
         int combinationCount = 1;
@@ -119,10 +125,14 @@ public class FactorialDOE {
      * @throws IllegalArgumentException if designFactorCount is negative
      */
     public static RealMatrix fullFactorial2Level(int designFactorCount) {
+        // parse designFactorCount
+        if(designFactorCount<=0){
+            throw new IllegalArgumentException("design factor count cannot be a negative");
+        }
         // create matrix
         Integer combinationCount = (int) Math.pow(2, designFactorCount);
         Array2DRowRealMatrix matrixFactory = new Array2DRowRealMatrix();
-        RealMatrix matrix = matrixFactory.createMatrix(combinationCount, designFactorCount);
+        RealMatrix matrix = matrixFactory.createMatrix(combinationCount, designFactorCount );
         // populate matrix
         // Generate all binary numbers from 0 to (2^k - 1)
         for (int i = 0; i < combinationCount; i++) {
@@ -298,7 +308,7 @@ public class FactorialDOE {
      * </pre>
      * </p>
      *
-     * @param n   the total number of factors in the design
+     * @param factorCount   the total number of factors in the design
      * @param res the desired resolution (must be 3, 4, or 5)
      * @return a RealMatrix containing the fractional factorial design
      * @throws IllegalArgumentException if resolution is not in the range [3, 5], or if the design is not feasible
@@ -309,17 +319,21 @@ public class FactorialDOE {
     // NOTE:
     // Combinations factors = which factors/levels are tested together
     // Resolution = how clearly we can separate their effects after testing
-    public static RealMatrix fractionalFactorialByResolution(int n, int res) {
+    public static RealMatrix fractionalFactorialByResolution(int factorCount, int res) {
         // Validating resolution
         if (res < 3 || res > 5) {
+            throw new IllegalArgumentException("resolution number should be in range of 3 to 5");
+        }
+        // Validating factor count
+        if ( factorCount <= 0 || factorCount > 20) {
             throw new IllegalArgumentException("resolution number should be in range of 3 to 5");
         }
 
         // 1. Find minimum base factors needed
         Integer minFac = null;
 
-        for (int k = res - 1; k < n; k++) {
-            if (FactorialUtility.nFacAtRes(k, res) >= n) {
+        for (int k = res - 1; k < factorCount; k++) {
+            if (FactorialUtility.nFacAtRes(k, res) >= factorCount) {
                 minFac = k;
                 break;
             }
@@ -341,7 +355,7 @@ public class FactorialDOE {
 
         // 4. Generate combinations for extra factors
         List<String> extraFactors = new ArrayList<>();
-        int neededFactors = n - mainFactors.size();
+        int neededFactors = factorCount - mainFactors.size();
 
         // Generate combinations from length (res-1) up to length of factors
         for (int r = res - 1; r <= mainFactors.size() && neededFactors > 0; r++) {
