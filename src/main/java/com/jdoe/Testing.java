@@ -1,5 +1,6 @@
 package com.jdoe;
 
+import com.jdoe.algorithms.BoxBehnkenDOE;
 import com.jdoe.algorithms.FactorialDOE;
 
 /**
@@ -16,6 +17,7 @@ public class Testing
 //        FactorialDOE.fullFactorial2Level( arrayOfLevels.length );
 //        FactorialDOE.fractionalFactorial( "a b -ab" );
 //        FactorialDOE.fractionalFactorial( "a b +ab" );
-          FactorialDOE.fractionalFactorialByResolution( 6,4 );
+//          FactorialDOE.fractionalFactorialByResolution( 6,4 );
+      //  BoxBehnkenDOE.boxBehnkenDesign( 4 );
     }
 }
