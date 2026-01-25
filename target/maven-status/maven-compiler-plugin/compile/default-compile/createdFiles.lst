@@ -1,0 +1,6 @@
+com/jdoe/util/FactorialUtility.class
+com/jdoe/util/BuildRegressionMatrixUtility.class
+com/jdoe/algorithms/BuildRegressionMatrix.class
+com/jdoe/algorithms/BoxBehnkenDOE.class
+com/jdoe/algorithms/FactorialDOE.class
+com/jdoe/Testing.class
