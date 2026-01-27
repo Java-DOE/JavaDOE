@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.jdoe.util.BuildRegressionMatrixUtility;
 
-public class BuildRegressionMatrix {
+public class BuildRegressionMatrixDOE {
 
     /**
      * Builds a regression matrix from an experimental design matrix and a mathematical model string.
