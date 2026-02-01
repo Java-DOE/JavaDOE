@@ -1,4 +1,4 @@
-package com.jdoe.algorithms;
+package com.doe.algorithms;
 
 import static org.junit.Assert.*;
 import org.apache.commons.math3.linear.RealMatrix;

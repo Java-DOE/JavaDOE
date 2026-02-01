@@ -1,6 +1,6 @@
-package com.jdoe.algorithms;
+package com.doe.algorithms;
 
-import com.jdoe.util.GenericDOEUtil;
+import com.doe.util.GenericDOEUtil;
 
 public class StarDOE {
     /**

@@ -1,4 +1,4 @@
-package com.jdoe.algorithms;
+package com.doe.algorithms;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -11,7 +11,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.jdoe.util.FactorialUtility;
+import com.doe.util.FactorialUtility;
 
 /*
  * Copyright (c) 2025 Noor Mustafa

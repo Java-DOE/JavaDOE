@@ -1,10 +1,10 @@
-package com.jdoe.algorithms;
+package com.doe.algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.jdoe.util.BuildRegressionMatrixUtility;
+import com.doe.util.BuildRegressionMatrixUtility;
 
 public class BuildRegressionMatrixDOE {
 

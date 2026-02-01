@@ -1,11 +1,11 @@
-package com.jdoe.algorithms;
+package com.doe.algorithms;
 
 import org.apache.commons.math3.linear.Array2DRowFieldMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.jetbrains.annotations.NotNull;
 
-import com.jdoe.util.GenericDOEUtil;
+import com.doe.util.GenericDOEUtil;
 
 public class CompositeDOE {
 
@@ -103,7 +103,7 @@ public class CompositeDOE {
 /**
  * Detailed Steps to Port Central Composite Design Script to Java
  * <p>
- * $ 1. Create CompositeDOE Class Structure Create CompositeDOE.java in com.jdoe.algorithms package Add imports:
+ * $ 1. Create CompositeDOE Class Structure Create CompositeDOE.java in com.doe.algorithms package Add imports:
  * org.apache.commons.math3.linear.* for matrix operations Define method signature: public static RealMatrix centralCompositeDesign(int n,
  * int[] center, String alpha, String face) Set default parameters handling for center, alpha, and face
  * <p>

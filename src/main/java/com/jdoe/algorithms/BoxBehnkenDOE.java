@@ -1,4 +1,4 @@
-package com.jdoe.algorithms;
+package com.doe.algorithms;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;

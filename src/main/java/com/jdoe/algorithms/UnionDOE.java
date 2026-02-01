@@ -1,6 +1,6 @@
-package com.jdoe.algorithms;
+package com.doe.algorithms;
 
-import com.jdoe.util.GenericDOEUtil;
+import com.doe.util.GenericDOEUtil;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 

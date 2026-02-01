@@ -1,4 +1,4 @@
-package com.jdoe.util;
+package com.doe.util;
 
 import java.util.ArrayList;
 import java.util.List;

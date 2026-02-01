@@ -1,7 +1,7 @@
-package com.jdoe;
+package com.doe;
 
-import com.jdoe.algorithms.BoxBehnkenDOE;
-import com.jdoe.algorithms.FactorialDOE;
+import com.doe.algorithms.BoxBehnkenDOE;
+import com.doe.algorithms.FactorialDOE;
 
 /**
  * Hello world!
