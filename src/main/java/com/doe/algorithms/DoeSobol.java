@@ -29,7 +29,7 @@ public class DoeSobol {
      * Generate a Sobol' sequence (quasi-random design matrix).
      *
      * @param n           Number of points to generate
-     * @param d           Dimension of the space (must be <= 21201)
+     * @param d           Dimension of the space (must be &lt;= 21201)
      * @param scramble    Whether to apply Owen scrambling. Default is false
      * @param seed        Seed for the random number generator (used only when scramble=true)
      * @param bounds      Bounds for each dimension. Each element must be a (min, max) pair.

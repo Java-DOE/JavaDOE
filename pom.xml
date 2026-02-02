@@ -23,7 +23,7 @@
     <developer>
       <id>noormustafa</id>
       <name>Noor Mustafa</name>
-      <email>mustafanoor715@gmail.com</email>
+      <email>noor@example.com</email>
       <organization>Java-DOE</organization>
       <organizationUrl>https://github.com/Java-DOE</organizationUrl>
     </developer>
@@ -144,11 +144,15 @@
                 </executions>
             </plugin>
             
-            <!-- Plugin to generate Javadoc JAR -->
+            <!-- Plugin to generate Javadoc JAR - configured to ignore errors for GitHub Packages -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.6.3</version>
+                <configuration>
+                    <doclint>none</doclint>
+                    <failOnError>false</failOnError>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>

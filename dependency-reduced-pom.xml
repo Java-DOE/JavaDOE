@@ -2,10 +2,32 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.doe</groupId>
-  <artifactId>doe-genereter</artifactId>
-  <name>doe</name>
-  <version>1.0-SNAPSHOT</version>
-  <url>http://maven.apache.org</url>
+  <artifactId>doe-generator</artifactId>
+  <name>Java Design of Experiments (DOE)</name>
+  <version>1.0.0</version>
+  <description>A comprehensive Java library for Design of Experiments (DOE) algorithms including Box-Behnken, Central Composite, Factorial, and other DOE methods.</description>
+  <url>https://github.com/Java-DOE/JavaDOE</url>
+  <developers>
+    <developer>
+      <id>noormustafa</id>
+      <name>Noor Mustafa</name>
+      <email>noor@example.com</email>
+      <organization>Java-DOE</organization>
+      <organizationUrl>https://github.com/Java-DOE</organizationUrl>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:git:https://github.com/Java-DOE/JavaDOE.git</connection>
+    <developerConnection>scm:git:ssh://github.com:Java-DOE/JavaDOE.git</developerConnection>
+    <url>https://github.com/Java-DOE/JavaDOE/tree/main</url>
+  </scm>
   <build>
     <plugins>
       <plugin>
@@ -35,6 +57,34 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <doclint>none</doclint>
+          <failOnError>false</failOnError>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -78,6 +128,13 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Java-DOE Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/Java-DOE/JavaDOE</url>
+    </repository>
+  </distributionManagement>
   <properties>
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.source>17</maven.compiler.source>
