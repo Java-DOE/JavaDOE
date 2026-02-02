@@ -1,2 +1,2 @@
-# JDOE
+# doe
 Java Design of Experiments

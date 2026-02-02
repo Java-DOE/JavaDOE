@@ -1,12 +1,12 @@
-package com.jdoe.algorithms;
+package com.doe.algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.jdoe.util.BuildRegressionMatrixUtility;
+import com.doe.util.BuildRegressionMatrixUtility;
 
-public class BuildRegressionMatrix {
+public class BuildRegressionMatrixDOE {
 
     /**
      * Builds a regression matrix from an experimental design matrix and a mathematical model string.
