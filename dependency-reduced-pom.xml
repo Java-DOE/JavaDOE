@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.doe</groupId>
+  <groupId>io.github.java-doe</groupId>
   <artifactId>doe-generator</artifactId>
   <name>Java Design of Experiments (DOE)</name>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <description>A comprehensive Java library for Design of Experiments (DOE) algorithms including Box-Behnken, Central Composite, Factorial, and other DOE methods.</description>
-  <url>https://github.com/Java-DOE/JavaDOE</url>
+  <url>https://java-doe.github.io/JavaDOE</url>
   <developers>
     <developer>
       <id>noormustafa</id>
       <name>Noor Mustafa</name>
-      <email>noor@example.com</email>
+      <email>mustafanoor715@gmail.com</email>
       <organization>Java-DOE</organization>
-      <organizationUrl>https://github.com/Java-DOE</organizationUrl>
+      <organizationUrl>https://java-doe.github.io/JavaDOE</organizationUrl>
     </developer>
   </developers>
   <licenses>
@@ -25,7 +25,7 @@
   </licenses>
   <scm>
     <connection>scm:git:https://github.com/Java-DOE/JavaDOE.git</connection>
-    <developerConnection>scm:git:ssh://github.com:Java-DOE/JavaDOE.git</developerConnection>
+    <developerConnection>scm:git:ssh://git@github.com:Java-DOE/JavaDOE.git</developerConnection>
     <url>https://github.com/Java-DOE/JavaDOE/tree/main</url>
   </scm>
   <build>
@@ -85,6 +85,28 @@
           <doclint>none</doclint>
           <failOnError>false</failOnError>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.9.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
