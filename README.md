@@ -2,6 +2,8 @@
 
 A comprehensive Java library for Design of Experiments (DOE) algorithms including Box-Behnken, Central Composite, Factorial, and other DOE methods.
 
+Link Maven Repository: https://mvnrepository.com/artifact/io.github.java-doe/doe-generator
+
 ## Features
 
 - Box-Behnken Design
